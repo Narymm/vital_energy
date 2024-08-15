@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 # Выключаем логирование
-#logging.disable(logging.CRITICAL)
+logging.disable(logging.CRITICAL)
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
