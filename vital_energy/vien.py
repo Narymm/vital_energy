@@ -301,7 +301,7 @@ def main() -> None:
         print("JobQueue не инициализирован!")
         return
 
-    job_queue.run_repeating(send_ping, interval=timedelta(minutes=60), first=timedelta(seconds=10), name="ping_job", data="chat_id")
+    job_queue.run_repeating(send_ping, interval=timedelta(minutes=180), first=timedelta(seconds=10), name="ping_job", data="chat_id")
 
     
     conv_handler = ConversationHandler(
