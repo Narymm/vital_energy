@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 # Выключаем логирование
-logging.disable(logging.CRITICAL)
+#logging.disable(logging.CRITICAL)
 
 # Загрузка переменных окружения из файла .env
 load_dotenv()
@@ -25,7 +25,7 @@ load_dotenv()
 bot_token = os.getenv('BOT_TOKEN')
 
 # Определение состояний для ConversationHandler
-ASK_NAME, QUESTION1, QUESTION2, GET_DATA, RESULT = range(5)
+ASK_NAME, QUESTION1, QUESTION2, GET_DATA, RESULT, GET_FIRST_ANSWER = range(6)
 
 # Вопросы и варианты ответов
 questions = [
@@ -177,11 +177,12 @@ async def handle_question(update: Update, context: CallbackContext) -> None:
         return QUESTION1 + current_state
     
     elif current_state == len(questions) and query.data == "Отправить данные":
-        if context.user_data['telegram_account'] == None:
+        if context.user_data['telegram_account'] is None:
              await query.message.reply_text(
-                 'Пожалуйста, введите <b><i>Данные</i></b> и укажите <b><i>Контакт</i></b>, по которому можно с вами связаться (аккаунт ТГ/телефон/почта):',
+                 'Пожалуйста, укажите <b><i>аккаунт ТГ через @ или номер телефона</i></b>, куда отправить информацию:',
                  parse_mode='HTML'
-            )
+             )
+             return GET_FIRST_ANSWER
         else:
             await query.message.reply_text(
                 'Пожалуйста, введите данные:'
@@ -224,6 +225,17 @@ async def handle_question(update: Update, context: CallbackContext) -> None:
                                        )
         return ConversationHandler.END
     
+async def get_first_answer(update: Update, context: CallbackContext) -> int:
+    # Получаем ответ пользователя на первый вопрос
+    user_answer = update.message.text
+    context.user_data['telegram_account'] = user_answer  # Сохраняем ответ в user_data
+    
+    await update.message.reply_text(
+        'Пожалуйста, введите данные:',
+        parse_mode='HTML'
+    )
+    return GET_DATA
+
 # Функция для обработки данных
 async def get_addit_data(update: Update, context: CallbackContext) -> None:
     user_input = update.message.text
@@ -318,6 +330,7 @@ def main() -> None:
             QUESTION1: [CallbackQueryHandler(handle_question, pattern='^(Овен|Телец|Близнецы|Рак|Лев|Дева|Весы|Скорпион|Стрелец|Козерог|Водолей|Рыбы)$')],
             QUESTION2: [CallbackQueryHandler(handle_question, pattern='^(Отправить данные|Нет, спасибо)$')],
             GET_DATA: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_addit_data)],
+            GET_FIRST_ANSWER: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_first_answer)],
         },
         fallbacks=[CallbackQueryHandler(cancel, pattern="^cancel$")]
     )
